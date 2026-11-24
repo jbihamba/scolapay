@@ -1,4 +1,5 @@
-name: ScolaPay Frontend CI
+
+name: ScolaPay CI
 
 on:
   push:
@@ -14,10 +15,6 @@ jobs:
     name: Frontend Quality Checks
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: .
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,10 +29,41 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint -- app
+        run: npm run lint -- app src components lib
 
       - name: Check TypeScript
         run: npx tsc --noEmit
 
       - name: Build Next.js
+        run: npm run build
+
+  backend-quality:
+    name: Backend Quality Checks
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run backend ESLint
+        run: npm run lint
+
+      - name: Check backend TypeScript
+        run: npm run typecheck
+
+      - name: Build AdonisJS
         run: npm run build
