@@ -30,7 +30,7 @@
     "typescript": "^5"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
+    "app/**/*.{ts,tsx,js,jsx}": [
       "eslint --fix"
     ],
     "*.{json,md}": [
