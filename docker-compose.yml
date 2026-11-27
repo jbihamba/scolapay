@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: scolapay-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${DB_USER:-scolapay}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD doit être défini dans server/.env}
+      POSTGRES_DB: ${DB_DATABASE:-scolapay_dev}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - scolapay-postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    networks:
+      - scolapay-network
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: development
+
+    container_name: scolapay-api
+    restart: unless-stopped
+
+    env_file:
+      - ./server/.env
+
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3333
+      DB_CONNECTION: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-scolapay}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD doit être défini dans server/.env}
+      DB_DATABASE: ${DB_DATABASE:-scolapay_dev}
+
+    ports:
+      - "127.0.0.1:3333:3333"
+
+    volumes:
+      - ./server:/app
+      - scolapay-api-node-modules:/app/node_modules
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - scolapay-network
+
+volumes:
+  scolapay-postgres-data:
+  scolapay-api-node-modules:
+
+networks:
+  scolapay-network:
+    driver: bridge
